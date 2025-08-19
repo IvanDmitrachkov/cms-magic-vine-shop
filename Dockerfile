@@ -1,5 +1,5 @@
 # Базовый образ Node
-FROM node:18
+FROM node:20.18.3
 
 # Рабочая директория внутри контейнера
 WORKDIR /srv/app
