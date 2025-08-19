@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   strapi:
-    image: strapi/strapi:latest
+    build: ./strapi-app
     restart: always
     environment:
       DATABASE_CLIENT: mysql
@@ -32,6 +32,9 @@ services:
       - cms-network
     ports:
       - "1337:1337"
+    depends_on:
+      - cms-backend-mysql-1
+      - cms-backend-minio-1
     volumes:
       - ./strapi-app:/srv/app
 
