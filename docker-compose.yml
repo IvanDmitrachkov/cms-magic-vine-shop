@@ -32,9 +32,6 @@ services:
       - cms-network
     ports:
       - "1337:1337"
-    depends_on:
-      - cms-backend-mysql-1
-      - cms-backend-minio-1
     volumes:
       - ./strapi-app:/srv/app
 
