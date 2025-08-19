@@ -55,8 +55,8 @@ services:
       MINIO_USE_SSL: false
       MINIO_HOST: /cdn
 
-      VIRTUAL_HOST: cms.unclespace.ru
-      LETSENCRYPT_HOST: cms.unclespace.ru
+      VIRTUAL_HOST: cms-test.unclespace.ru
+      LETSENCRYPT_HOST: cms-test.unclespace.ru
       LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
     depends_on:
       - mysql
