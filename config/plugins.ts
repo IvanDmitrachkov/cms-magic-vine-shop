@@ -1,18 +1,24 @@
 export default ({ env }) => {
-    const plugins: any = []
+    const plugins: any = {}
 
     if (env("NODE_ENV") === 'production') {
         plugins.upload ={
             config: {
-                provider: "strapi-provider-minio-brokstock",
-                    providerOptions: {
-                    accessKey: env("MINIO_ACCESS_KEY"),
-                        secretKey: env("MINIO_SECRET_KEY"),
-                        bucket: env("MINIO_BUCKET"),
-                        endPoint: env("MINIO_ENDPOINT"),
-                        host: env("MINIO_HOST"),
-                        port: env("MINIO_PORT"),
-                        useSSL: env("MINIO_USE_SSL"),
+                provider: 'aws-s3',
+                providerOptions: {
+                    accessKeyId: env('MINIO_ACCESS_KEY'),
+                    secretAccessKey: env('MINIO_SECRET_KEY'),
+                    region: env('MINIO_REGION', 'us-east-1'), // MinIO обычно не требует, но S3 API просит
+                    params: {
+                        Bucket: env('MINIO_BUCKET'),
+                    },
+                    endpoint: env('MINIO_ENDPOINT', 'http://127.0.0.1:9000'),
+                    s3ForcePathStyle: true, // важно для MinIO
+                },
+                actionOptions: {
+                    upload: {},
+                    uploadStream: {},
+                    delete: {},
                 },
             },
         }
