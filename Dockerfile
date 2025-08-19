@@ -1,5 +1,5 @@
 # Базовый образ Node
-FROM node:18-alpine
+FROM node:18
 
 # Рабочая директория внутри контейнера
 WORKDIR /srv/app
