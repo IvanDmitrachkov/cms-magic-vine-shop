@@ -3,6 +3,7 @@ version: '3.8'
 services:
   mysql:
     image: mysql:8
+    container_name: strapi-mysql
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -16,21 +17,23 @@ services:
 
   minio:
     image: minio/minio
+    container_name: strapi-minio
     restart: always
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
     volumes:
       - minio_data:/data
-    networks:
-      - internal
     expose:
       - "9000"
       - "9001"
+    networks:
+      - internal
 
   strapi:
-    image: strapi/strapi
+    image: strapi/strapi:latest
+    container_name: strapi
     restart: always
     environment:
       DATABASE_CLIENT: mysql
@@ -40,10 +43,20 @@ services:
       DATABASE_USERNAME: ${MYSQL_USER}
       DATABASE_PASSWORD: ${MYSQL_PASSWORD}
 
-      # Strapi keys
+      # Strapi secrets
       APP_KEYS: ${STRAPI_APP_KEYS}
       API_TOKEN_SALT: ${STRAPI_API_TOKEN_SALT}
       ADMIN_JWT_SECRET: ${STRAPI_JWT_SECRET}
+      JWT_SECRET: ${STRAPI_JWT_SECRET}
+
+      # Minio (для strapi-provider-minio-brokstock)
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET: ${MINIO_BUCKET}
+      MINIO_ENDPOINT: minio   # внутри docker-сети сервис называется "minio"
+      MINIO_PORT: 9000
+      MINIO_USE_SSL: false
+      MINIO_HOST: /cdn
     volumes:
       - ./strapi-app:/srv/app
     depends_on:
@@ -51,7 +64,7 @@ services:
       - minio
     networks:
       - internal
-      - proxy-network  # чтобы nginx видел
+      - proxy-network
 
 networks:
   internal:
@@ -62,4 +75,3 @@ networks:
 volumes:
   mysql_data:
   minio_data:
-
