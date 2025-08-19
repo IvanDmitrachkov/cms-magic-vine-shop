@@ -1,92 +1,40 @@
+version: "3.9"
+
 services:
-  mysql:
-    image: mysql:8
-    restart: always
-    command: --default-authentication-plugin=mysql_native_password
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-    volumes:
-      - mysql_data:/var/lib/mysql
-    networks:
-      - internal
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 5s
-      retries: 10
-
-  minio:
-    image: minio/minio
-    restart: always
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-    volumes:
-      - minio_data:/data
-    networks:
-      - internal
-    expose:
-      - "9000"
-      - "9001"
-
   strapi:
-    build: ./strapi-app
+    image: strapi/strapi:latest
     restart: always
-    env_file:
-      - .env
     environment:
       DATABASE_CLIENT: mysql
-      DATABASE_HOST: mysql
-      DATABASE_PORT: 3306
-      DATABASE_NAME: ${MYSQL_DATABASE}
-      DATABASE_USERNAME: ${MYSQL_USER}
-      DATABASE_PASSWORD: ${MYSQL_PASSWORD}
+      DATABASE_HOST: ${DATABASE_HOST}
+      DATABASE_PORT: ${DATABASE_PORT}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_USERNAME: ${DATABASE_USERNAME}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
 
-      # Strapi secrets
-      APP_KEYS: ${STRAPI_APP_KEYS}
-      API_TOKEN_SALT: ${STRAPI_API_TOKEN_SALT}
-      ADMIN_JWT_SECRET: ${STRAPI_JWT_SECRET}
-      JWT_SECRET: ${STRAPI_JWT_SECRET}
+      APP_KEYS: ${APP_KEYS}
+      API_TOKEN_SALT: ${API_TOKEN_SALT}
+      ADMIN_JWT_SECRET: ${ADMIN_JWT_SECRET}
+      JWT_SECRET: ${JWT_SECRET}
 
-      # MinIO
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      MINIO_PORT: ${MINIO_PORT}
+      MINIO_USE_SSL: ${MINIO_USE_SSL}
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
       MINIO_BUCKET: ${MINIO_BUCKET}
-      MINIO_ENDPOINT: minio
-      MINIO_PORT: 9000
-      MINIO_USE_SSL: false
-      MINIO_HOST: /cdn
 
-      VIRTUAL_HOST: cms-test.unclespace.ru
-      LETSENCRYPT_HOST: cms-test.unclespace.ru
+      VIRTUAL_HOST: ${VIRTUAL_HOST}
+      LETSENCRYPT_HOST: ${LETSENCRYPT_HOST}
       LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
 
-    depends_on:
-      - mysql
-      - minio
     networks:
-      - internal
-      - proxy-network
+      - cms-network
     ports:
       - "1337:1337"
-    command: |
-      sh -c "
-      until mysql -h $DATABASE_HOST -u $DATABASE_USERNAME -p$DATABASE_PASSWORD $DATABASE_NAME; do
-        echo 'Waiting for MySQL...'
-        sleep 3
-      done
-      && npm run start
-      "
+    volumes:
+      - ./strapi-app:/srv/app
 
 networks:
-  internal:
-    driver: bridge
-  proxy-network:
+  cms-network:
     external: true
-
-volumes:
-  mysql_data:
-  minio_data:
