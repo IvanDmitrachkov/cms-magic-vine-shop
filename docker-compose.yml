@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   strapi:
-    build: ./strapi-app
+    build: .
     restart: always
     environment:
       DATABASE_CLIENT: mysql
