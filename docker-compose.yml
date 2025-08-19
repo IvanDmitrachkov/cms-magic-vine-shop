@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   mysql:
     image: mysql:8
@@ -14,6 +12,10 @@ services:
       - mysql_data:/var/lib/mysql
     networks:
       - internal
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      retries: 10
 
   minio:
     image: minio/minio
@@ -33,6 +35,8 @@ services:
   strapi:
     build: ./strapi-app
     restart: always
+    env_file:
+      - .env
     environment:
       DATABASE_CLIENT: mysql
       DATABASE_HOST: mysql
@@ -47,11 +51,11 @@ services:
       ADMIN_JWT_SECRET: ${STRAPI_JWT_SECRET}
       JWT_SECRET: ${STRAPI_JWT_SECRET}
 
-      # Minio (для strapi-provider-minio-brokstock)
+      # MinIO
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
       MINIO_BUCKET: ${MINIO_BUCKET}
-      MINIO_ENDPOINT: minio   # внутри docker-сети сервис называется "minio"
+      MINIO_ENDPOINT: minio
       MINIO_PORT: 9000
       MINIO_USE_SSL: false
       MINIO_HOST: /cdn
@@ -59,6 +63,7 @@ services:
       VIRTUAL_HOST: cms-test.unclespace.ru
       LETSENCRYPT_HOST: cms-test.unclespace.ru
       LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+
     depends_on:
       - mysql
       - minio
@@ -67,6 +72,14 @@ services:
       - proxy-network
     ports:
       - "1337:1337"
+    command: |
+      sh -c "
+      until mysql -h $DATABASE_HOST -u $DATABASE_USERNAME -p$DATABASE_PASSWORD $DATABASE_NAME; do
+        echo 'Waiting for MySQL...'
+        sleep 3
+      done
+      && npm run start
+      "
 
 networks:
   internal:
